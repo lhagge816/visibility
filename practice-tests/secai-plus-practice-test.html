@@ -46,8 +46,8 @@
   button.primary:hover{opacity:.92;}
   button:disabled{opacity:.45; cursor:not-allowed;}
   button.small{padding:6px 10px; font-size:.82rem;}
-  #startScreen, #examScreen, #resultsScreen{display:none;}
-  #examScreen.active, #startScreen.active, #resultsScreen.active{display:block;}
+  #startScreen, #examScreen, #resultsScreen, #historyScreen{display:none;}
+  #examScreen.active, #startScreen.active, #resultsScreen.active, #historyScreen.active{display:block;}
 
   .exam-topbar{position:sticky; top:0; background:var(--bg); padding:10px 0; display:flex; align-items:center; justify-content:space-between; gap:12px; border-bottom:1px solid var(--border); margin-bottom:16px; z-index:5; flex-wrap:wrap;}
   .timer{font-variant-numeric:tabular-nums; font-weight:700; font-size:1.05rem; padding:6px 12px; border-radius:8px; background:var(--card); border:1px solid var(--border);}
@@ -90,6 +90,19 @@
   .badge{display:inline-block; margin-top:10px; padding:5px 14px; border-radius:999px; font-weight:700; font-size:.85rem;}
   .badge.pass{background:var(--correct-bg); color:var(--correct);}
   .badge.fail{background:var(--incorrect-bg); color:var(--incorrect);}
+
+  .history-stats{display:grid; grid-template-columns:repeat(auto-fit, minmax(120px,1fr)); gap:10px; margin-bottom:6px;}
+  .history-stat{text-align:center; padding:10px 6px;}
+  .history-stat .num{font-size:1.5rem; font-weight:800;}
+  .history-stat .label{color:var(--muted); font-size:.76rem; text-transform:uppercase; letter-spacing:.02em; margin-top:2px;}
+  .history-chart-wrap{overflow-x:auto;}
+  table.history{width:100%; border-collapse:collapse; font-size:.86rem;}
+  table.history th, table.history td{text-align:left; padding:8px 6px; border-bottom:1px solid var(--border); white-space:nowrap;}
+  table.history th{color:var(--muted); font-weight:600;}
+  .history-table-wrap{overflow-x:auto;}
+  .result-tag{font-weight:700; font-size:.76rem; text-transform:uppercase; padding:2px 8px; border-radius:6px; display:inline-block;}
+  .result-tag.pass{background:var(--correct-bg); color:var(--correct);}
+  .result-tag.fail{background:var(--incorrect-bg); color:var(--incorrect);}
 
   .domain-bar-row{margin-bottom:14px;}
   .domain-bar-label{display:flex; justify-content:space-between; font-size:.85rem; margin-bottom:4px;}
@@ -155,6 +168,9 @@
 
     <div style="text-align:center; margin-top:20px;">
       <button class="primary" id="startBtn" style="padding:14px 32px; font-size:1.05rem;">Start Exam</button>
+      <div style="margin-top:12px;">
+        <button type="button" id="historyBtn">View My Progress</button>
+      </div>
     </div>
   </div>
 
@@ -225,8 +241,19 @@
       <div id="reviewArea" style="margin-top:14px;"></div>
     </div>
 
-    <div style="text-align:center; margin:20px 0;">
+    <div style="text-align:center; margin:20px 0; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
       <button class="primary" id="retakeBtn" style="padding:12px 28px;">Retake Exam (new question order)</button>
+      <button type="button" id="viewProgressBtn" style="padding:12px 28px;">View My Progress</button>
+    </div>
+  </div>
+
+  <div id="historyScreen">
+    <h1 style="margin-bottom:4px;">Your Practice History</h1>
+    <div class="subtitle">Every completed attempt is recorded automatically so you can track whether you're improving over time.</div>
+    <div id="historyContent"></div>
+    <div style="text-align:center; margin:20px 0; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+      <button class="primary" id="historyBackBtn" style="padding:12px 28px;">Back to Start</button>
+      <button type="button" id="clearHistoryBtn" style="padding:12px 28px;">Clear History</button>
     </div>
   </div>
 
@@ -253,6 +280,61 @@
 <script>
 (function(){
   "use strict";
+
+  // ---------- progress history (db capability with localStorage fallback) ----------
+  var HISTORY_KEY = "secai_practice_history_v1";
+  var dbPromise = (typeof window.claude !== "undefined" && window.claude && typeof window.claude.use === "function")
+    ? window.claude.use("db")
+    : Promise.resolve(null);
+
+  function loadLocalHistory(){
+    try {
+      var raw = localStorage.getItem(HISTORY_KEY);
+      var list = raw ? JSON.parse(raw) : [];
+      return Array.isArray(list) ? list : [];
+    } catch (e){ return []; }
+  }
+  function saveLocalHistory(list){
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(list)); } catch (e){ /* ignore */ }
+  }
+  function recordAttemptLocal(attempt){
+    var list = loadLocalHistory();
+    list.push(attempt);
+    saveLocalHistory(list);
+  }
+  function recordAttempt(attempt){
+    dbPromise.then(function(ns){
+      if (ns){
+        ns.collection("attempts").add(attempt).catch(function(){ recordAttemptLocal(attempt); });
+      } else {
+        recordAttemptLocal(attempt);
+      }
+    });
+  }
+  function sortAttemptsDesc(a,b){
+    return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+  }
+  function fetchAttempts(){
+    return dbPromise.then(function(ns){
+      if (ns){
+        return ns.collection("attempts").orderBy("timestamp", "desc").limit(200).get()
+          .then(function(snap){ return snap.docs.map(function(d){ return d.data(); }); })
+          .catch(function(){ return loadLocalHistory().slice().sort(sortAttemptsDesc); });
+      }
+      return loadLocalHistory().slice().sort(sortAttemptsDesc);
+    });
+  }
+  function clearAllHistory(){
+    saveLocalHistory([]);
+    return dbPromise.then(function(ns){
+      if (!ns) return;
+      return ns.collection("attempts").get().then(function(snap){
+        return Promise.all(snap.docs.map(function(d){
+          return ns.collection("attempts").doc(d.id).delete();
+        }));
+      }).catch(function(){ /* ignore */ });
+    });
+  }
 
   var DOMAINS = {
     1: {name:"Basic AI Concepts Related to Cybersecurity", weight:17, count:10},
@@ -1713,6 +1795,16 @@
     Array.prototype.forEach.call(document.querySelectorAll("input[name='reviewFilter']"), function(radio){
       radio.addEventListener("change", function(){ renderReview(this.value); });
     });
+
+    recordAttempt({
+      bank: selectedBankIndex + 1,
+      timestamp: new Date().toISOString(),
+      scaledScore: scaled,
+      correctCount: totalCorrect,
+      totalQuestions: total,
+      pass: pass,
+      domainBreakdown: domainStats
+    });
   }
 
   function renderReview(filter){
@@ -1760,12 +1852,93 @@
   }
 
   function showScreen(name){
-    ["startScreen","examScreen","resultsScreen"].forEach(function(id){
+    ["startScreen","examScreen","resultsScreen","historyScreen"].forEach(function(id){
       document.getElementById(id).classList.remove("active");
     });
-    var map = {start:"startScreen", exam:"examScreen", results:"resultsScreen"};
+    var map = {start:"startScreen", exam:"examScreen", results:"resultsScreen", history:"historyScreen"};
     document.getElementById(map[name]).classList.add("active");
     window.scrollTo(0,0);
+  }
+
+  function fmtAttemptDate(iso){
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString(undefined, {year:"numeric", month:"short", day:"numeric"}) + " " +
+      d.toLocaleTimeString(undefined, {hour:"numeric", minute:"2-digit"});
+  }
+
+  function renderHistoryChart(attemptsAsc){
+    var w = 640, h = 200, padL = 34, padR = 12, padT = 14, padB = 22;
+    var innerW = w - padL - padR, innerH = h - padT - padB;
+    var n = attemptsAsc.length;
+    var minY = 100, maxY = 900;
+    function xFor(i){ return n <= 1 ? padL + innerW/2 : padL + (innerW * i/(n-1)); }
+    function yFor(score){ return padT + innerH * (1 - (score-minY)/(maxY-minY)); }
+    var passY = yFor(600);
+    var pointsAttr = attemptsAsc.map(function(a,i){ return xFor(i)+","+yFor(a.scaledScore); }).join(" ");
+    var circles = attemptsAsc.map(function(a,i){
+      var cx = xFor(i), cy = yFor(a.scaledScore);
+      var color = a.pass ? "var(--correct)" : "var(--incorrect)";
+      var label = escapeHtml(fmtAttemptDate(a.timestamp) + " — Test " + a.bank + " — Score " + a.scaledScore);
+      return "<circle cx='"+cx+"' cy='"+cy+"' r='4' fill='"+color+"' stroke='var(--card)' stroke-width='1.5'><title>"+label+"</title></circle>";
+    }).join("");
+    return "<svg viewBox='0 0 "+w+" "+h+"' style='width:100%; height:auto; display:block;' role='img' aria-label='Score history over time'>"
+      + "<line x1='"+padL+"' y1='"+passY+"' x2='"+(w-padR)+"' y2='"+passY+"' stroke='var(--muted)' stroke-dasharray='4 3' stroke-width='1'/>"
+      + "<text x='"+(w-padR)+"' y='"+(passY-5)+"' text-anchor='end' font-size='10' fill='var(--muted)'>Pass (600)</text>"
+      + (n > 1 ? "<polyline points='"+pointsAttr+"' fill='none' stroke='var(--accent)' stroke-width='2'/>" : "")
+      + circles
+      + "<text x='"+padL+"' y='"+(h-4)+"' font-size='10' fill='var(--muted)'>Attempt 1</text>"
+      + (n > 1 ? "<text x='"+(w-padR)+"' y='"+(h-4)+"' text-anchor='end' font-size='10' fill='var(--muted)'>Attempt "+n+"</text>" : "")
+      + "</svg>";
+  }
+
+  function renderHistoryContent(attemptsDesc){
+    var content = document.getElementById("historyContent");
+    if (!attemptsDesc.length){
+      content.innerHTML = "<div class='card'><div class='hint' style='margin:0;'>No attempts recorded yet — take a practice test to start tracking your progress.</div></div>";
+      return;
+    }
+    var attemptsAsc = attemptsDesc.slice().reverse();
+    var best = attemptsDesc.reduce(function(m,a){ return a.scaledScore > m ? a.scaledScore : m; }, 0);
+    var passCount = attemptsDesc.filter(function(a){ return a.pass; }).length;
+    var latest = attemptsDesc[0];
+    var prev = attemptsDesc[1];
+    var trendHtml = "";
+    if (prev){
+      var diff = latest.scaledScore - prev.scaledScore;
+      var arrow = diff > 0 ? "▲" : (diff < 0 ? "▼" : "–");
+      var color = diff > 0 ? "var(--correct)" : (diff < 0 ? "var(--incorrect)" : "var(--muted)");
+      trendHtml = "<span style='color:"+color+"; font-weight:700;'>"+arrow+" "+(diff>0?"+":"")+diff+"</span> vs. previous attempt";
+    }
+
+    var html = "";
+    html += "<div class='card'>";
+    html += "<div class='history-stats'>";
+    html += "<div class='history-stat'><div class='num'>"+attemptsDesc.length+"</div><div class='label'>Attempts</div></div>";
+    html += "<div class='history-stat'><div class='num'>"+latest.scaledScore+"</div><div class='label'>Most Recent</div></div>";
+    html += "<div class='history-stat'><div class='num'>"+best+"</div><div class='label'>Best Score</div></div>";
+    html += "<div class='history-stat'><div class='num'>"+passCount+"/"+attemptsDesc.length+"</div><div class='label'>Passed</div></div>";
+    html += "</div>";
+    if (trendHtml) html += "<div class='hint' style='text-align:center; margin:6px 0 0;'>"+trendHtml+"</div>";
+    html += "</div>";
+
+    html += "<div class='card'><h2>Score over time</h2><div class='history-chart-wrap'>"+renderHistoryChart(attemptsAsc)+"</div></div>";
+
+    html += "<div class='card'><h2>Attempt log</h2><div class='history-table-wrap'><table class='history'>";
+    html += "<thead><tr><th>Date</th><th>Test</th><th>Score</th><th>Correct</th><th>Result</th></tr></thead><tbody>";
+    attemptsDesc.forEach(function(a){
+      html += "<tr><td>"+escapeHtml(fmtAttemptDate(a.timestamp))+"</td><td>#"+a.bank+"</td><td>"+a.scaledScore+"</td><td>"+a.correctCount+"/"+a.totalQuestions+"</td>"+
+        "<td><span class='result-tag "+(a.pass?"pass":"fail")+"'>"+(a.pass?"Pass":"Fail")+"</span></td></tr>";
+    });
+    html += "</tbody></table></div></div>";
+
+    content.innerHTML = html;
+  }
+
+  function loadAndRenderHistory(){
+    var content = document.getElementById("historyContent");
+    content.innerHTML = "<div class='card'><div class='hint' style='margin:0;'>Loading your history…</div></div>";
+    fetchAttempts().then(renderHistoryContent);
   }
 
   function renderTestPicker(){
@@ -1809,12 +1982,13 @@
     flags[idx] = this.checked;
     renderPalette();
   });
-  function showModal(msg, onConfirm){
+  function showModal(msg, onConfirm, confirmLabel){
     document.getElementById("modalMessage").textContent = msg;
     var overlay = document.getElementById("modalOverlay");
     overlay.hidden = false;
     var confirmBtn = document.getElementById("modalConfirmBtn");
     var cancelBtn = document.getElementById("modalCancelBtn");
+    confirmBtn.textContent = confirmLabel || "Confirm";
     function cleanup(){
       overlay.hidden = true;
       confirmBtn.removeEventListener("click", onConfirmClick);
@@ -1831,10 +2005,27 @@
     var msg = unanswered > 0
       ? "You have " + unanswered + " unanswered question(s). Submit the exam anyway?"
       : "Submit the exam now?";
-    showModal(msg, finishExam);
+    showModal(msg, finishExam, "Submit Exam");
   });
   document.getElementById("retakeBtn").addEventListener("click", function(){
     showScreen("start");
+  });
+
+  document.getElementById("historyBtn").addEventListener("click", function(){
+    showScreen("history");
+    loadAndRenderHistory();
+  });
+  document.getElementById("viewProgressBtn").addEventListener("click", function(){
+    showScreen("history");
+    loadAndRenderHistory();
+  });
+  document.getElementById("historyBackBtn").addEventListener("click", function(){
+    showScreen("start");
+  });
+  document.getElementById("clearHistoryBtn").addEventListener("click", function(){
+    showModal("Clear all recorded practice history? This cannot be undone.", function(){
+      clearAllHistory().then(loadAndRenderHistory);
+    }, "Clear History");
   });
 
 })();
