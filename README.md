@@ -4,8 +4,10 @@ An unofficial, self-contained mock exam for the CompTIA SecAI+ (CY0-001) certifi
 
 ## What it does
 
-- **60 original questions in 60 minutes**, matching the real exam's format (single-answer multiple choice, multiple-response, and a scenario/sequencing item), with a live countdown timer that auto-submits when time runs out.
-- **Domain weighting matches the official blueprint exactly:**
+- **6 independent practice tests**, each with 60 different, original questions — pick one from the start screen.
+- Scenario-driven, exam-style questions (BEST/MOST/FIRST-style qualifiers, closely related distractors) rather than simple keyword matching, matching the real exam's format (single-answer multiple choice, multiple-response, and a scenario/sequencing item).
+- **60 questions in 60 minutes**, with a live countdown timer that auto-submits when time runs out — and a **Pause** button that freezes the timer and covers the question until you're ready to resume.
+- **Domain weighting matches the official blueprint exactly, on every one of the 6 tests:**
   | Domain | Weight | Questions on this exam |
   |---|---|---|
   | 1.0 Basic AI Concepts Related to Cybersecurity | 17% | 10 |
