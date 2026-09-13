@@ -6,6 +6,7 @@
 <title>SecAI+ Practice Exam</title>
 </head>
 <body>
+<title>SecAI+ Practice Exam</title>
 <style>
   :root{
     --bg:#f7f7f8; --fg:#1b1c1f; --card:#ffffff; --border:#dcdde2; --muted:#666a75;
@@ -65,8 +66,9 @@
   .option.selected{border-color:var(--accent); background:color-mix(in srgb, var(--accent) 10%, var(--card));}
   .option.correct{border-color:var(--correct); background:var(--correct-bg);}
   .option.incorrect{border-color:var(--incorrect); background:var(--incorrect-bg);}
-  .order-row{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border:1px solid var(--border); border-radius:8px; margin-bottom:8px;}
-  .order-row select{font:inherit; padding:4px 8px; border-radius:6px; border:1px solid var(--border); background:var(--card); color:var(--fg);}
+  .order-row{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border:1px solid var(--border); border-radius:8px; margin-bottom:8px; flex-wrap:wrap;}
+  .order-row span{flex:1 1 200px;}
+  .order-row select{font:inherit; padding:4px 8px; border-radius:6px; border:1px solid var(--border); background:var(--card); color:var(--fg); flex:0 1 auto; max-width:100%;}
 
   .exam-actions{display:flex; justify-content:space-between; align-items:center; margin-top:18px; gap:10px; flex-wrap:wrap;}
   .exam-actions .left, .exam-actions .right{display:flex; gap:8px; flex-wrap:wrap;}
@@ -373,17 +375,9 @@
     {domain:1, type:"single", text:"A user asks a model to classify the sentiment of a product review without including any example classifications in the prompt at all, relying entirely on the model's pretrained knowledge to infer the task. This is BEST described as:",
       options:[{t:"Zero-shot prompting",c:1},{t:"One-shot prompting"},{t:"Multi-shot prompting"},{t:"Fine-tuning"}],
       exp:"Asking a model to perform a task with no examples provided in the prompt is zero-shot prompting. One-shot provides exactly one example and multi-shot provides several, while fine-tuning would involve additional training, not just prompt wording."},
-    {domain:1, type:"order", text:"Arrange the following stages of the AI model development life cycle in the order they should occur, from first (1) to last (7).",
-      steps:[
-        {t:"Collect the data that will be used to build the model", order:1},
-        {t:"Prepare and clean the collected data for training", order:2},
-        {t:"Develop and select a candidate model architecture", order:3},
-        {t:"Evaluate the trained model's performance against requirements", order:4},
-        {t:"Deploy the model into production", order:5},
-        {t:"Monitor and maintain the deployed model over time", order:6},
-        {t:"Incorporate feedback and iterate on the model", order:7}
-      ],
-      exp:"The AI life cycle flows from data collection, through preparation, model development/selection, evaluation, deployment, ongoing monitoring and maintenance, and finally feedback-driven iteration — each stage depends on the one before it."},
+    {domain:1, type:"single", text:"A threat-intelligence platform converts each incoming report into a numeric vector that captures its semantic meaning, so that reports describing similar campaigns end up positioned near each other in that vector space even when they use completely different wording. These numeric vector representations are called:",
+      options:[{t:"Embeddings",c:1},{t:"Tokens"},{t:"Weights"},{t:"Checkpoints"}],
+      exp:"Numeric vector representations that capture semantic meaning are embeddings. Tokens are the discrete text units that get embedded, weights are learned model parameters, and checkpoints are saved model states — none are the vector representations themselves."},
 
     // ================= DOMAIN 2 — Securing AI Systems (24) =================
     {domain:2, type:"single", text:"A security team wants a community-maintained reference of the most critical, application-layer security risks specific to applications built on large language models, such as prompt injection and insecure output handling. Which resource should they consult?",
@@ -446,9 +440,14 @@
     {domain:2, type:"single", text:"An attacker positioned between an AI agent and the downstream system it controls intercepts a legitimately generated command — such as an approved fund-transfer instruction — and alters its destination account before it reaches the payment system, without ever manipulating the model that generated it. This is BEST classified as an:",
       options:[{t:"Output integrity attack",c:1},{t:"Insecure output handling flaw"},{t:"Excessive agency issue"},{t:"Insecure plug-in design flaw"}],
       exp:"Tampering with a model's legitimate output in transit, after it was generated correctly, is an output integrity attack. Insecure output handling is instead an application flaw where legitimate-but-untrusted output isn't validated before use, excessive agency concerns an agent having more permissions than it needs, and insecure plug-in design concerns a plugin failing to validate its own inputs."},
-    {domain:2, type:"single", text:"An AI agent's calendar-booking plugin blindly executes any date, time, and attendee list the language model passes to it, with no validation that the attendee list only contains people the requesting user is authorized to invite. A manipulated prompt causes the plugin to add an external attacker to a confidential meeting. This weakness is BEST classified as:",
-      options:[{t:"Insecure plug-in design",c:1},{t:"Excessive agency"},{t:"Output integrity attack"},{t:"Model denial of service"}],
-      exp:"A plugin that fails to validate the parameters an LLM passes to it, before acting on them, exhibits insecure plug-in design. Excessive agency instead concerns the agent holding broader permissions than its task needs (a separate, though related, risk), an output integrity attack tampers with output in transit, and model DoS targets availability."},
+    {domain:2, type:"match", text:"Match each attack technique on the left to the compensating control that BEST mitigates it.",
+      pairs:[
+        {left:"Prompt injection carried through untrusted retrieved content", right:"Prompt firewalls that inspect and filter input before it reaches the model"},
+        {left:"Data poisoning of the training pipeline", right:"Data integrity controls that verify training data hasn't been tampered with"},
+        {left:"An autonomous agent manipulated into taking unauthorized actions", right:"Least privilege scoping of the agent's tool access"},
+        {left:"A stolen backup drive containing model weights", right:"Encryption at rest with independently managed keys"}
+      ],
+      exp:"Prompt firewalls filter malicious input before it reaches the model, data integrity controls detect tampered training data, least privilege limits what a manipulated agent can do, and encryption at rest protects stolen storage media from being read. Each control is matched to the layer of the system its corresponding attack actually targets — input, training data, agent permissions, and stored data, respectively."},
     {domain:2, type:"single", text:"A cleverly worded prompt causes a customer-service chatbot to reveal a portion of another customer's account details that had been included earlier in the assistant's shared context, even though no attacker technique was used to alter the model's training or trick it into a persona change. This outcome is BEST classified as:",
       options:[{t:"Sensitive information disclosure",c:1},{t:"Model poisoning"},{t:"Model theft"},{t:"AI supply chain attack"}],
       exp:"Confidential data being exposed through a model's output — whatever the root cause — is sensitive information disclosure. Model poisoning tampers with a model's parameters, model theft clones a model's behavior, and a supply chain attack compromises a component before deployment — none describe the leak of specific confidential content itself."},
@@ -515,9 +514,14 @@
     {domain:4, type:"single", text:"An organization establishes a centralized internal group responsible for setting AI standards, vetting new AI use cases, and coordinating best practices across every business unit that wants to adopt AI. This organizational structure is BEST described as a(n):",
       options:[{t:"AI Center of Excellence",c:1},{t:"AI security architect"},{t:"MLOps engineer"},{t:"AI risk analyst"}],
       exp:"A centralized group that sets standards and coordinates AI adoption across an organization is an AI Center of Excellence — an organizational structure, not an individual role like the security architect, MLOps engineer, or risk analyst positions listed."},
-    {domain:4, type:"single", text:"A specific individual is responsible for designing the security architecture of an organization's AI systems — defining how model endpoints, data stores, and agent permissions are protected — as a distinct specialty from general application security. This role is BEST described as a(n):",
-      options:[{t:"AI security architect",c:1},{t:"Data scientist"},{t:"AI governance engineer"},{t:"Platform engineer"}],
-      exp:"Designing the security architecture specifically for AI systems is the AI security architect role. A data scientist focuses on model development and analysis, an AI governance engineer implements policy and compliance tooling, and a platform engineer builds the underlying infrastructure — related but distinct responsibilities."},
+    {domain:4, type:"match", text:"Match each AI governance role on the left to its core responsibility.",
+      pairs:[
+        {left:"AI security architect", right:"Designs the security architecture protecting model endpoints, data stores, and agent permissions"},
+        {left:"MLOps engineer", right:"Builds and maintains automated pipelines that train, validate, version, and deploy models"},
+        {left:"AI auditor", right:"Independently reviews deployed AI systems against policy and regulatory requirements"},
+        {left:"AI risk analyst", right:"Continuously assesses and prioritizes AI-related risks and recommends mitigations"}
+      ],
+      exp:"Each role owns a distinct slice of AI governance: the security architect designs protective architecture, the MLOps engineer operationalizes model pipelines, the auditor independently verifies compliance after the fact, and the risk analyst continuously assesses and prioritizes risk going forward — related roles that are easy to confuse but cover different responsibilities."},
     {domain:4, type:"single", text:"A team member is responsible for building and maintaining the automated pipelines that train, validate, version, and deploy machine learning models into production, ensuring reproducibility across environments. This role is BEST described as a(n):",
       options:[{t:"MLOps engineer",c:1},{t:"AI architect"},{t:"AI auditor"},{t:"Data engineer"}],
       exp:"Building and maintaining automated model training/deployment pipelines is the MLOps engineer's core responsibility. An AI architect instead designs overall system structure, an AI auditor independently assesses compliance after the fact, and a data engineer focuses on building data pipelines rather than model deployment pipelines specifically."},
@@ -647,9 +651,14 @@
     {domain:2, type:"single", text:"A company exposes an internal model's inference endpoint to its partner network but relies solely on a firewall rule limiting the source IP range, with no per-caller authentication required. A partner's laptop within that IP range is later compromised by unrelated malware. What is the MOST significant consequence of the original design choice in this situation?",
       options:[{t:"The compromised laptop can call the endpoint without further authentication",c:1},{t:"The firewall rule will automatically detect and quarantine the malware"},{t:"The endpoint's encryption will be disabled once malware is present on the network"},{t:"The partner's entire network segment will be blocked from all traffic"}],
       exp:"IP filtering restricts where traffic can originate but says nothing about who or what is making the call, so any compromised host in the allowed range can reach the endpoint unauthenticated. The other statements misdescribe what IP filtering actually provides."},
-    {domain:2, type:"single", text:"An engineer scoping permissions for a new autonomous ticket-triage agent grants it standing access to a code-execution sandbox, the full internal file system, and an outbound email tool, even though its stated task is only to read tickets and draft replies. A later prompt-injected ticket causes it to read internal files and email them externally. Which underlying design weakness MOST directly enabled this outcome?",
-      options:[{t:"Excessive agency: tool access far beyond what the task required",c:1},{t:"Model inversion aimed at reconstructing sensitive ticket data"},{t:"Membership inference targeting the agent's training data"},{t:"Data or concept drift affecting the agent's reply quality"}],
-      exp:"The agent held far more tool access than its actual task needed, so a single manipulated input could drive high-impact, unintended actions — the defining characteristic of excessive agency. Model inversion and membership inference are training-data privacy attacks, and drift is gradual performance decay, neither of which explains a single manipulated ticket triggering direct action."},
+    {domain:2, type:"match", text:"Match each attack technique on the left to the compensating control that BEST mitigates it.",
+      pairs:[
+        {left:"A jailbreak prompt attempting to bypass the model's content policy", right:"Model guardrails that filter policy-violating output"},
+        {left:"Excessive agency: an agent granted far more tool access than its task requires", right:"Least privilege scoping of the agent's tool access"},
+        {left:"A compromised third-party base model distributed on a public hub", right:"Verifying the artifact's cryptographic signature before use"},
+        {left:"A flood of computationally expensive requests degrading availability", right:"Rate limiting on the inference endpoint"}
+      ],
+      exp:"Model guardrails filter policy-violating output regardless of how a jailbreak was worded, least privilege limits what an over-permissioned agent can do if manipulated, signature verification catches a tampered model before it's ever deployed, and rate limiting directly counters a flood of costly requests. Each control targets the specific mechanism its paired attack exploits."},
     {domain:2, type:"order", text:"Arrange the following stages of a secure model deployment pipeline in the order they should occur, from first (1) to last (4).",
       steps:[
         {t:"Validate and sanitize the training dataset before any training run begins", order:1},
@@ -710,9 +719,14 @@
     {domain:4, type:"single", text:"A company documents formal, written rules governing which AI tools employees may use, how model outputs must be reviewed before acting on them, and what data may never be submitted to an external AI service. This documentation is BEST described as:",
       options:[{t:"AI policies and procedures",c:1},{t:"An AI Center of Excellence"},{t:"A model card"},{t:"An AI bill of materials"}],
       exp:"Formal, written rules governing approved tools, review requirements, and data handling are AI policies and procedures. An AI Center of Excellence is the organizational group that helps create and enforce such policies, while a model card and AI-BOM are documentation about a specific model, not organization-wide behavioral rules."},
-    {domain:4, type:"single", text:"An individual is responsible for exploring data, building statistical and machine learning models, and interpreting results to answer specific business questions, without necessarily owning the production infrastructure those models eventually run on. This role is BEST described as a(n):",
-      options:[{t:"Data scientist",c:1},{t:"MLOps engineer"},{t:"Platform engineer"},{t:"AI governance engineer"}],
-      exp:"Exploring data and building/interpreting models to answer business questions is the data scientist's core focus. An MLOps engineer instead operationalizes and deploys models at scale, a platform engineer builds underlying infrastructure, and an AI governance engineer implements policy and compliance tooling."},
+    {domain:4, type:"match", text:"Match each AI governance role on the left to its core responsibility.",
+      pairs:[
+        {left:"Data scientist", right:"Explores data and builds/interprets models to answer specific business questions"},
+        {left:"AI architect", right:"Designs the overall structural fit of models, data pipelines, and applications"},
+        {left:"Platform engineer", right:"Builds and maintains the underlying infrastructure AI workloads run on"},
+        {left:"Data engineer", right:"Builds and maintains pipelines that collect and prepare data for training"}
+      ],
+      exp:"Each role owns a distinct slice of the AI stack: the data scientist explores data and builds models, the AI architect designs how everything fits together structurally, the platform engineer builds the infrastructure underneath it all, and the data engineer builds the pipelines that feed data in — related roles that are easy to confuse but cover different layers."},
     {domain:4, type:"single", text:"An individual is responsible for designing the overall structure of an organization's AI systems — how models, data pipelines, and applications fit together — without focusing specifically on security architecture or day-to-day model operations. This role is BEST described as a(n):",
       options:[{t:"AI architect",c:1},{t:"AI security architect"},{t:"MLOps engineer"},{t:"Data engineer"}],
       exp:"Designing the overall structural fit of models, data pipelines, and applications is the AI architect's role. The AI security architect instead focuses specifically on security design, the MLOps engineer focuses on operational deployment pipelines, and the data engineer focuses on building data pipelines rather than overall AI system structure."},
@@ -842,9 +856,14 @@
     {domain:2, type:"multi", text:"A security team is scoping compensating controls to reduce the risk of prompt injection reaching a production LLM application. Which two controls are MOST directly relevant to this specific risk?",
       options:[{t:"Prompt firewalls, which inspect and block malicious patterns at the gateway before they reach the model",c:1},{t:"Model guardrails, which filter the model's own outputs against policy rules",c:1},{t:"Data augmentation, which generates synthetic training examples rather than filtering prompts or outputs"},{t:"Data balancing, which corrects class distribution rather than filtering prompts or outputs"},{t:"Federated learning, which is a training pattern rather than a runtime filtering control"}],
       exp:"Prompt firewalls and model guardrails directly target prompt injection by filtering malicious input before it reaches the model and filtering policy-violating output before it reaches the user. Data augmentation, data balancing, and federated learning are all training-time techniques unrelated to runtime prompt/output filtering."},
-    {domain:2, type:"single", text:"An engineer scoping permissions for a new autonomous email-drafting agent grants it standing access to send external emails and modify shared calendars company-wide, even though its stated task is only to propose meeting times for calendar owners to approve. A prompt-injected meeting invite later manipulates the agent into sending confidential calendar details to an external address. Which underlying design weakness MOST directly enabled this outcome?",
-      options:[{t:"Excessive agency: system access far beyond what the task required",c:1},{t:"Model inversion targeting the shared calendar system"},{t:"Membership inference targeting the scheduling training data"},{t:"Data or concept drift affecting meeting-time suggestions"}],
-      exp:"The agent held far more system access than its actual task needed, so a single manipulated input could drive a high-impact, unintended disclosure — the defining characteristic of excessive agency. Model inversion and membership inference are training-data privacy attacks, and drift is gradual performance decay, neither of which explains a single manipulated invite triggering direct disclosure."},
+    {domain:2, type:"match", text:"Match each attack technique on the left to the compensating control that BEST mitigates it.",
+      pairs:[
+        {left:"Sensitive customer data leaking through an over-broad RAG retrieval", right:"Access controls enforcing document-level permissions at retrieval time"},
+        {left:"Excessive agency: an agent granted standing access far beyond its stated task", right:"Least privilege scoping of the agent's tool access"},
+        {left:"A plugin executing any parameters an LLM passes to it without checks", right:"Input validation on plugin parameters before they're acted on"},
+        {left:"Confidential data appearing in an AI provider's retained prompt logs", right:"Removing secrets from prompt templates and using a secrets manager"}
+      ],
+      exp:"Retrieval-time access controls stop over-broad RAG exposure at the source, least privilege limits what an over-permissioned agent can do if manipulated, input validation stops a plugin from acting on unchecked LLM-supplied parameters, and removing secrets from prompts (rather than relying on a provider's logging policy) stops them from ever reaching retained logs."},
     {domain:2, type:"order", text:"Arrange the following stages of a secure model deployment pipeline in the order they should occur, from first (1) to last (4).",
       steps:[
         {t:"Validate and sanitize the training dataset before any training run begins", order:1},
@@ -905,9 +924,14 @@
     {domain:4, type:"single", text:"A company operating in the EU must classify its AI systems into defined risk tiers — from unacceptable to minimal risk — and comply with tier-specific obligations before deploying certain high-risk systems. Which regulation is this?",
       options:[{t:"The EU AI Act",c:1},{t:"The OECD AI standards"},{t:"ISO/IEC 42001"},{t:"The NIST AI Risk Management Framework"}],
       exp:"The EU AI Act specifically establishes binding, tiered risk classifications and obligations for AI systems within the EU. The OECD standards are non-binding international principles, ISO/IEC 42001 is a voluntary management-system standard, and the NIST AI RMF is a U.S. voluntary framework — none impose the EU's binding tiered legal obligations."},
-    {domain:4, type:"single", text:"A multinational organization references a set of non-binding, internationally agreed principles — developed through cooperation among member countries' governments — for trustworthy AI, to help align its global AI policy with broadly recognized international norms rather than any single country's binding law. Which of the following BEST fits this description?",
-      options:[{t:"OECD AI standards",c:1},{t:"The EU AI Act"},{t:"ISO/IEC 42001"},{t:"The NIST AI Risk Management Framework"}],
-      exp:"The OECD AI standards are non-binding principles developed through intergovernmental cooperation among member countries, aimed at international alignment rather than a single jurisdiction's binding law. The EU AI Act is binding EU law, and ISO/IEC 42001 and the NIST AI RMF are standards/frameworks from a standards body and a single country's agency, respectively, not intergovernmental principles."},
+    {domain:4, type:"match", text:"Match each AI governance role on the left to its core responsibility.",
+      pairs:[
+        {left:"Machine learning engineer", right:"Takes an experimental model and makes it robust, scalable, and production-ready"},
+        {left:"AI governance engineer", right:"Builds the technical tooling that automatically enforces AI policy"},
+        {left:"AI Center of Excellence", right:"Sets AI standards and coordinates adoption across business units"},
+        {left:"AI risk analyst", right:"Continuously assesses and prioritizes AI-related risks and recommends mitigations"}
+      ],
+      exp:"Each role owns a distinct slice of AI governance: the machine learning engineer hardens an experimental model for production, the governance engineer builds tooling that enforces policy automatically, the AI Center of Excellence sets standards and coordinates adoption organization-wide, and the risk analyst continuously assesses and prioritizes risk — related roles that are easy to confuse but cover different responsibilities."},
     {domain:4, type:"single", text:"An organization pursues a certifiable, internationally recognized management-system standard — issued by the same body responsible for widely adopted quality and security standards — that specifically defines requirements for how it governs the lifecycle of its AI systems. Which of the following BEST fits this description?",
       options:[{t:"ISO/IEC 42001",c:1},{t:"The EU AI Act"},{t:"OECD AI standards"},{t:"The NIST AI Risk Management Framework"}],
       exp:"ISO/IEC 42001 is the certifiable AI management-system standard issued by the International Organization for Standardization. The EU AI Act is binding regional law rather than a certifiable management standard, OECD standards are non-binding intergovernmental principles, and the NIST AI RMF is a U.S. voluntary framework rather than an ISO certification."},
@@ -966,16 +990,9 @@
     {domain:1, type:"single", text:"After several months in production, user complaints and observed errors are formally collected and used to decide what changes the next version of the model should make, closing the loop back to an earlier life-cycle stage. This closing-the-loop stage is BEST described as:",
       options:[{t:"Feedback and iteration",c:1},{t:"Model evaluation"},{t:"Data preparation"},{t:"Business use case alignment"}],
       exp:"Collecting real-world results and using them to inform the next version is feedback and iteration, the stage that closes the life-cycle loop. Model evaluation and data preparation are earlier, pre-deployment stages, and business use case alignment is the very first strategic check before any technical work begins."},
-    {domain:1, type:"order", text:"Arrange the following stages of the AI model development life cycle in the order they should occur, from first (1) to last (6).",
-      steps:[
-        {t:"Confirm the business use case aligns with corporate objectives", order:1},
-        {t:"Collect and prepare the data needed to build the model", order:2},
-        {t:"Develop and select a candidate model architecture", order:3},
-        {t:"Evaluate the trained model against requirements before release", order:4},
-        {t:"Deploy the model into production and validate it continues to perform", order:5},
-        {t:"Incorporate real-world feedback and iterate on the next version", order:6}
-      ],
-      exp:"The life cycle begins with confirming strategic fit, then moves through data collection/preparation, model development/selection, evaluation, deployment and ongoing validation, and finally feedback-driven iteration — each stage builds on the one before it."},
+    {domain:1, type:"single", text:"A news organization embeds an imperceptible, machine-detectable pattern into every photo an AI system generates for its articles, so that even after the image is downloaded and reshared elsewhere, a detector can later confirm it was AI-generated rather than an authentic photograph. This technique is BEST described as:",
+      options:[{t:"Watermarking",c:1},{t:"Data masking"},{t:"Model validation"},{t:"Data anonymization"}],
+      exp:"Embedding an imperceptible, detectable marker to later identify content as AI-generated is watermarking. Data masking obscures sensitive values for authorized display, model validation checks a model's performance, and data anonymization removes identifying information — none describe marking content's generative origin."},
 
     // ================= DOMAIN 2 — Securing AI Systems (24) =================
     {domain:2, type:"single", text:"A security team wants a community-maintained reference of the most critical, application-layer security risks specific to applications built on large language models, such as prompt injection and insecure output handling. Which resource should they consult?",
@@ -1020,9 +1037,14 @@
     {domain:2, type:"single", text:"An attacker adds a carefully calculated, nearly invisible pattern of pixel noise to a stop-sign photo so an autonomous vehicle's already-deployed vision model classifies it as a yield sign, while the sign looks completely unchanged to a human observer. This is BEST classified as:",
       options:[{t:"Input manipulation",c:1},{t:"Data poisoning"},{t:"Model poisoning"},{t:"AI supply chain attack"}],
       exp:"A crafted, near-imperceptible input perturbation aimed at an already-trained model at inference time is input manipulation. Data poisoning and model poisoning instead require corrupting training data or model parameters directly, and a supply chain attack involves a tampered component rather than a crafted input."},
-    {domain:2, type:"single", text:"An internal chatbot becomes unresponsive to legitimate users after receiving a short burst of requests, each padded with tens of thousands of tokens of repeated nonsense text whose only purpose is to maximize the compute cost of generating each reply. This is BEST classified as:",
-      options:[{t:"Model denial of service",c:1},{t:"Sensitive information disclosure"},{t:"Insecure output handling"},{t:"Excessive agency"}],
-      exp:"Deliberately overwhelming an inference endpoint with computationally expensive requests to degrade availability is model denial of service. Sensitive information disclosure concerns leaked content, insecure output handling is an application flaw, and excessive agency concerns over-broad permissions — none target availability directly."},
+    {domain:2, type:"match", text:"Match each attack technique on the left to the compensating control that BEST mitigates it.",
+      pairs:[
+        {left:"An attacker circumventing guardrails through an undocumented internal endpoint", right:"Applying access controls consistently across every endpoint, not just the public-facing one"},
+        {left:"A backdoored model that activates malicious behavior on a hidden trigger input", right:"Verifying artifact signatures and provenance before deploying a model"},
+        {left:"An autonomous support-ticket agent granted access far beyond its stated task", right:"Least privilege scoping of the agent's tool access"},
+        {left:"Overreliance on unverified AI-generated output driving a downstream decision", right:"Requiring human validation of outputs before they're acted on"}
+      ],
+      exp:"Consistent access controls close the gap an undocumented endpoint would otherwise leave open, signature and provenance verification catches a backdoored model before deployment, least privilege limits what an over-permissioned agent can do if manipulated, and human validation catches unverified output before it drives a decision. Each control is matched to the specific weakness its paired attack actually exploits."},
     {domain:2, type:"single", text:"An engineer scoping permissions for a new autonomous refund agent grants it standing access to issue refunds directly and modify customer payment methods, even though its stated task is only to recommend refund amounts for a manager to approve. A prompt-injected support ticket later manipulates the agent into issuing an unauthorized refund. Which underlying design weakness MOST directly enabled this outcome?",
       options:[{t:"Excessive agency: system access far beyond what the task required",c:1},{t:"Model inversion targeting the customer payment-method database"},{t:"Membership inference targeting the refund training data"},{t:"Data or concept drift affecting refund-amount recommendations"}],
       exp:"The agent held far more system access than its actual task needed, so a single manipulated input could drive a high-impact, unauthorized refund — the defining characteristic of excessive agency. Model inversion and membership inference are training-data privacy attacks, and drift is gradual performance decay, neither explaining a single manipulated ticket triggering a direct refund."},
@@ -1113,9 +1135,14 @@
     {domain:4, type:"single", text:"An organization establishes a centralized internal group responsible for setting AI standards, vetting new AI use cases, and coordinating best practices across every business unit that wants to adopt AI. This organizational structure is BEST described as a(n):",
       options:[{t:"AI Center of Excellence",c:1},{t:"AI governance engineer"},{t:"AI risk analyst"},{t:"AI auditor"}],
       exp:"A centralized group that sets standards and coordinates AI adoption across an organization is an AI Center of Excellence — an organizational structure, not an individual role like the governance engineer, risk analyst, or auditor positions listed."},
-    {domain:4, type:"single", text:"A specific individual is responsible for designing the security architecture of an organization's AI systems — defining how model endpoints, data stores, and agent permissions are protected — as a distinct specialty from general application security. This role is BEST described as a(n):",
-      options:[{t:"AI security architect",c:1},{t:"Data scientist"},{t:"AI governance engineer"},{t:"Platform engineer"}],
-      exp:"Designing the security architecture specifically for AI systems is the AI security architect role. A data scientist focuses on model development and analysis, an AI governance engineer implements policy and compliance tooling, and a platform engineer builds the underlying infrastructure."},
+    {domain:4, type:"match", text:"Match each AI governance role on the left to its core responsibility.",
+      pairs:[
+        {left:"AI security architect", right:"Designs the security architecture protecting model endpoints, data stores, and agent permissions"},
+        {left:"Data engineer", right:"Builds and maintains pipelines that collect and prepare data for training"},
+        {left:"MLOps engineer", right:"Builds and maintains automated pipelines that train, validate, version, and deploy models"},
+        {left:"AI governance engineer", right:"Builds the technical tooling that automatically enforces AI policy"}
+      ],
+      exp:"Each role owns a distinct slice of the AI stack: the security architect designs protective architecture, the data engineer builds pipelines that prepare training data, the MLOps engineer operationalizes model pipelines, and the governance engineer builds tooling that enforces policy automatically — related roles that are easy to confuse but cover different responsibilities."},
     {domain:4, type:"single", text:"An individual independently reviews an organization's deployed AI systems against internal policy and external regulatory requirements, producing formal findings for leadership, without being responsible for building or operating those systems. This role is BEST described as a(n):",
       options:[{t:"AI auditor",c:1},{t:"AI risk analyst"},{t:"Machine learning engineer"},{t:"MLOps engineer"}],
       exp:"Independently reviewing systems against policy/regulatory requirements and producing formal findings is the AI auditor's role, distinct from the risk analyst (ongoing risk assessment), the ML engineer (building models), and the MLOps engineer (operationalizing deployment)."},
@@ -1233,9 +1260,14 @@
     {domain:2, type:"single", text:"A team removes the sensitive fields it detects in raw AI interaction logs before those logs are forwarded to a third-party analytics vendor, distinct from the separate step of encrypting and restricting access to the logs once stored. This removal step is BEST described as:",
       options:[{t:"Log sanitization",c:1},{t:"Log protection"},{t:"Log monitoring"},{t:"AI cost monitoring"}],
       exp:"Automatically stripping sensitive content out of log data before it's shared or stored further is log sanitization, distinct from log protection (securing already-stored logs) and log monitoring (watching for unusual activity). AI cost monitoring tracks spend, not log content."},
-    {domain:2, type:"single", text:"An engineer scoping permissions for a new autonomous vendor-onboarding agent grants it standing access to activate new vendors directly in the payment system, even though its stated task is only to pre-fill onboarding forms for a procurement officer to approve. A prompt-injected onboarding form later manipulates the agent into activating a fraudulent shell vendor. Which underlying design weakness MOST directly enabled this outcome?",
-      options:[{t:"Excessive agency: system access far beyond what the task required",c:1},{t:"Model inversion targeting the vendor payment-activation system"},{t:"Membership inference targeting the onboarding training data"},{t:"Data or concept drift affecting form pre-fill accuracy"}],
-      exp:"The agent held far more system access than its actual task needed, so a single manipulated input could drive a high-impact, unauthorized vendor activation — the defining characteristic of excessive agency. Model inversion and membership inference are training-data privacy attacks, and drift is gradual performance decay, neither explaining a single manipulated form triggering direct activation."},
+    {domain:2, type:"match", text:"Match each attack technique on the left to the compensating control that BEST mitigates it.",
+      pairs:[
+        {left:"Model theft through high-volume systematic querying of an exposed endpoint", right:"Rate limiting combined with anomaly monitoring on query patterns"},
+        {left:"Excessive agency: a vendor-onboarding agent granted payment-system access beyond its task", right:"Least privilege scoping of the agent's tool access"},
+        {left:"An LLM manipulating a connected application integration through crafted parameters", right:"Input validation on parameters passed between connected tools"},
+        {left:"Sensitive information disclosure through a model that memorized training records", right:"Data minimization and redaction of sensitive fields before training"}
+      ],
+      exp:"Rate limiting and anomaly monitoring together make systematic model-extraction querying impractical, least privilege limits what an over-permissioned agent can do if manipulated, input validation stops crafted parameters from manipulating a connected integration, and minimizing/redacting sensitive data before training prevents it from ever being memorized in the first place."},
     {domain:2, type:"single", text:"A company exposes an internal model's API to a research-partner network but relies solely on a firewall rule limiting the source IP range, with no per-caller authentication required. A partner's workstation within that IP range is later compromised by unrelated malware. What is the MOST significant consequence of the original access-control design in this situation?",
       options:[{t:"The compromised workstation can call the API without any further authentication",c:1},{t:"The firewall rule will automatically detect and quarantine the malware"},{t:"The API's encryption in transit will be disabled once malware is present"},{t:"The partner's entire network segment will be blocked from all traffic"}],
       exp:"IP filtering restricts where traffic can originate but says nothing about who or what is making the call, so any compromised host in the allowed range can reach the API unauthenticated. The other statements misdescribe what IP filtering actually provides."},
@@ -1326,9 +1358,14 @@
     {domain:4, type:"single", text:"A company operating in the EU must ensure that certain categories of customer data used to train its AI models are stored and processed only within EU borders, in order to comply with regional legal requirements governing where that data may legally reside. This requirement is BEST described as:",
       options:[{t:"Data sovereignty",c:1},{t:"Data minimization"},{t:"Data provenance"},{t:"Data lineage"}],
       exp:"Legal requirements governing which jurisdiction data must be stored and processed in is data sovereignty. Data minimization limits how much data is collected, provenance tracks a dataset's origin, and lineage tracks its transformations."},
-    {domain:4, type:"single", text:"A company operating in the EU must classify its AI systems into defined risk tiers — from unacceptable to minimal risk — and comply with tier-specific obligations before deploying certain high-risk systems. Which regulation is this?",
-      options:[{t:"The EU AI Act",c:1},{t:"The OECD AI standards"},{t:"ISO/IEC 42001"},{t:"The NIST AI Risk Management Framework"}],
-      exp:"The EU AI Act specifically establishes binding, tiered risk classifications and obligations for AI systems within the EU. The OECD standards are non-binding international principles, ISO/IEC 42001 is a voluntary management-system standard, and the NIST AI RMF is a U.S. voluntary framework."},
+    {domain:4, type:"match", text:"Match each AI governance role on the left to its core responsibility.",
+      pairs:[
+        {left:"Data scientist", right:"Explores data and builds/interprets models to answer specific business questions"},
+        {left:"Machine learning engineer", right:"Takes an experimental model and makes it robust, scalable, and production-ready"},
+        {left:"AI governance engineer", right:"Builds the technical tooling that automatically enforces AI policy"},
+        {left:"Platform engineer", right:"Builds and maintains the underlying infrastructure AI workloads run on"}
+      ],
+      exp:"Each role owns a distinct slice of the AI stack: the data scientist explores data and builds models, the machine learning engineer hardens an experimental model for production, the governance engineer builds tooling that enforces policy automatically, and the platform engineer builds the infrastructure underneath it all — related roles that are easy to confuse but cover different responsibilities."},
     {domain:4, type:"single", text:"An organization pursues a certifiable, internationally recognized management-system standard — issued by the same body responsible for widely adopted quality and security standards — that specifically defines requirements for how it governs the lifecycle of its AI systems. Which of the following BEST fits this description?",
       options:[{t:"ISO/IEC 42001",c:1},{t:"The EU AI Act"},{t:"OECD AI standards"},{t:"The NIST AI Risk Management Framework"}],
       exp:"ISO/IEC 42001 is the certifiable AI management-system standard issued by the International Organization for Standardization. The EU AI Act is binding regional law, OECD standards are non-binding intergovernmental principles, and the NIST AI RMF is a U.S. voluntary framework rather than an ISO certification."}
@@ -1428,9 +1465,14 @@
     {domain:2, type:"single", text:"An organization encrypts its AI interaction logs at rest and restricts read access to a small group of authorized security analysts, specifically to prevent the logs themselves — which may contain sensitive conversation content — from becoming a new source of data exposure. This control is BEST described as:",
       options:[{t:"Log protection",c:1},{t:"Log sanitization"},{t:"Rate monitoring"},{t:"Response confidence-level monitoring"}],
       exp:"Encrypting and restricting access to stored logs, so the logs themselves don't become an exposure risk, is log protection. Log sanitization instead removes sensitive content from log entries before storage, rate monitoring tracks request volume, and confidence-level monitoring tracks model certainty."},
-    {domain:2, type:"single", text:"An engineer scoping permissions for a new autonomous inventory agent grants it standing access to place orders directly with suppliers and modify vendor bank details, even though its stated task is only to flag low-stock items for a purchasing manager to reorder. A prompt-injected supplier email later manipulates the agent into redirecting a payment. Which underlying design weakness MOST directly enabled this outcome?",
-      options:[{t:"Excessive agency: system access far beyond what the task required",c:1},{t:"Model inversion targeting the supplier payment records"},{t:"Membership inference targeting the inventory training data"},{t:"Data or concept drift affecting low-stock flagging accuracy"}],
-      exp:"The agent held far more system access than its actual task needed, so a single manipulated input could drive a high-impact, unintended payment redirection — the defining characteristic of excessive agency. Model inversion and membership inference are training-data privacy attacks, and drift is gradual performance decay, neither explaining a single manipulated email triggering a redirected payment."},
+    {domain:2, type:"match", text:"Match each attack technique on the left to the compensating control that BEST mitigates it.",
+      pairs:[
+        {left:"A transfer learning attack propagating a compromise through a poisoned reused base model", right:"Verifying the base model's cryptographic signature before fine-tuning from it"},
+        {left:"Excessive agency: an inventory agent granted supplier payment access beyond its task", right:"Least privilege scoping of the agent's tool access"},
+        {left:"Insecure output handling: raw model output passed directly into a shell command", right:"Validating and sanitizing model output before it's used downstream"},
+        {left:"Model denial of service from a flood of oversized, computationally expensive requests", right:"Token limits and input quotas enforced at the gateway"}
+      ],
+      exp:"Signature verification catches a poisoned base model before it's ever fine-tuned from, least privilege limits what an over-permissioned agent can do if manipulated, output validation stops raw model output from being executed unchecked, and gateway-level token limits and quotas directly counter oversized, costly requests. Each control targets the specific mechanism its paired attack exploits."},
     {domain:2, type:"single", text:"A team wants to adopt an open-source model uploaded under a brand-new account with no prior history, to save fine-tuning time ahead of a deadline. Which single action MOST directly reduces the risk that the specific artifact they download has already been compromised as part of an AI supply chain attack?",
       options:[{t:"Verifying the artifact's cryptographic hash or signature against a trusted, independently published value",c:1},{t:"Reading community discussion about the uploading account's reputation"},{t:"Waiting several weeks before downloading, in case other users report issues"},{t:"Fine-tuning the model further before deploying it internally"}],
       exp:"Only a cryptographic hash/signature check verifies the specific downloaded file's integrity against a trusted reference, which is what actually detects supply-chain tampering. Community reputation and waiting periods are weaker, indirect signals, and further fine-tuning does nothing to detect a pre-existing backdoor already baked into the base weights."},
@@ -1494,9 +1536,14 @@
       exp:"Converting content between languages while preserving meaning is translation. Summarization condenses content within the same language, pattern recognition surfaces recurring trends, and anomaly detection flags deviations from a baseline."},
 
     // ================= DOMAIN 4 — AI Governance, Risk, and Compliance (11) =================
-    {domain:4, type:"single", text:"An organization establishes a centralized internal group responsible for setting AI standards, vetting new AI use cases, and coordinating best practices across every business unit that wants to adopt AI. This organizational structure is BEST described as a(n):",
-      options:[{t:"AI Center of Excellence",c:1},{t:"AI risk analyst"},{t:"AI governance engineer"},{t:"Platform engineer"}],
-      exp:"A centralized group that sets standards and coordinates AI adoption across an organization is an AI Center of Excellence — an organizational structure, not an individual role like the risk analyst, governance engineer, or platform engineer positions listed."},
+    {domain:4, type:"match", text:"Match each AI governance role on the left to its core responsibility.",
+      pairs:[
+        {left:"AI architect", right:"Designs the overall structural fit of models, data pipelines, and applications"},
+        {left:"AI risk analyst", right:"Continuously assesses and prioritizes AI-related risks and recommends mitigations"},
+        {left:"AI Center of Excellence", right:"Sets AI standards and coordinates adoption across business units"},
+        {left:"Data engineer", right:"Builds and maintains pipelines that collect and prepare data for training"}
+      ],
+      exp:"Each entry owns a distinct slice of AI governance: the AI architect designs how models, data, and applications fit together structurally, the risk analyst continuously assesses and prioritizes risk, the AI Center of Excellence is an organizational structure that sets standards and coordinates adoption, and the data engineer builds the pipelines that feed data in — easy to confuse but covering different responsibilities."},
     {domain:4, type:"single", text:"An individual is responsible for exploring data, building statistical and machine learning models, and interpreting results to answer specific business questions, without necessarily owning the production infrastructure those models eventually run on. This role is BEST described as a(n):",
       options:[{t:"Data scientist",c:1},{t:"MLOps engineer"},{t:"AI security architect"},{t:"AI auditor"}],
       exp:"Exploring data and building/interpreting models to answer business questions is the data scientist's core focus. An MLOps engineer instead operationalizes and deploys models at scale, an AI security architect focuses on security design, and an AI auditor independently reviews compliance."},
@@ -1568,10 +1615,13 @@
     order = shuffle(QUESTION_BANK.map(function(q,i){ return i; }));
     order.forEach(function(idx){
       var q = QUESTION_BANK[idx];
-      if (q.type !== "order"){
-        q._shuffledOptions = shuffle(q.options);
-      } else {
+      if (q.type === "order"){
         q._shuffledSteps = shuffle(q.steps);
+      } else if (q.type === "match"){
+        q._shuffledPairs = shuffle(q.pairs);
+        q._shuffledRightOptions = shuffle(q.pairs.map(function(p){ return p.right; }));
+      } else {
+        q._shuffledOptions = shuffle(q.options);
       }
     });
     answers = {};
@@ -1628,6 +1678,7 @@
     if (q.type === "single") return a.length === 1;
     if (q.type === "multi") return a.length > 0;
     if (q.type === "order") return Object.keys(a).length === q.steps.length;
+    if (q.type === "match") return Object.keys(a).length === q.pairs.length;
     return false;
   }
 
@@ -1660,7 +1711,8 @@
     document.getElementById("flagBox").checked = !!flags[idx];
 
     var hint = document.getElementById("questionHint");
-    hint.textContent = q.type === "order" ? "Assign each step a position from 1 (first) to "+q.steps.length+" (last)." : "";
+    hint.textContent = q.type === "order" ? "Assign each step a position from 1 (first) to "+q.steps.length+" (last)."
+      : (q.type === "match" ? "Match each item on the left to the correct option from its dropdown." : "");
 
     var area = document.getElementById("optionsArea");
     area.innerHTML = "";
@@ -1723,6 +1775,36 @@
         row.appendChild(select);
         area.appendChild(row);
       });
+    } else if (q.type === "match"){
+      var savedMatch = answers[idx] || {};
+      q._shuffledPairs.forEach(function(pair, pi){
+        var row = document.createElement("div");
+        row.className = "order-row";
+        var span = document.createElement("span");
+        span.textContent = pair.left;
+        var select = document.createElement("select");
+        var blankOpt = document.createElement("option");
+        blankOpt.value = ""; blankOpt.textContent = "Choose match...";
+        select.appendChild(blankOpt);
+        q._shuffledRightOptions.forEach(function(rightText){
+          var o = document.createElement("option");
+          o.value = rightText; o.textContent = rightText;
+          if (savedMatch[pi] === rightText) o.selected = true;
+          select.appendChild(o);
+        });
+        select.addEventListener("change", function(){
+          var cur = answers[idx] || {};
+          var piAttr = parseInt(this.getAttribute("data-pi"), 10);
+          if (this.value === "") { delete cur[piAttr]; }
+          else { cur[piAttr] = this.value; }
+          answers[idx] = cur;
+          renderPalette();
+        });
+        select.setAttribute("data-pi", pi);
+        row.appendChild(span);
+        row.appendChild(select);
+        area.appendChild(row);
+      });
     }
 
     document.getElementById("prevBtn").disabled = current === 0;
@@ -1744,6 +1826,12 @@
       if (!a) return false;
       for (var si=0; si<q._shuffledSteps.length; si++){
         if (a[si] !== q._shuffledSteps[si].order) return false;
+      }
+      return true;
+    } else if (q.type === "match"){
+      if (!a) return false;
+      for (var pi=0; pi<q._shuffledPairs.length; pi++){
+        if (a[pi] !== q._shuffledPairs[pi].right) return false;
       }
       return true;
     }
@@ -1836,6 +1924,13 @@
           var userPos = userOrder[si] !== undefined ? userOrder[si] : "—";
           var ok = userOrder[si] === step.order;
           html += "<div class='option "+(ok?"correct":"incorrect")+"'>Correct position "+step.order+" — your answer: "+userPos+" — "+escapeHtml(step.t)+"</div>";
+        });
+      } else if (q.type === "match"){
+        var userMatch = answers[idx] || {};
+        q._shuffledPairs.forEach(function(pair, pi){
+          var userRight = userMatch[pi] !== undefined ? userMatch[pi] : "—";
+          var ok = userMatch[pi] === pair.right;
+          html += "<div class='option "+(ok?"correct":"incorrect")+"'>"+escapeHtml(pair.left)+" &rarr; correct match: "+escapeHtml(pair.right)+(ok?"":" — your answer: "+escapeHtml(userRight))+"</div>";
         });
       }
       html += "<div class='explanation'>"+escapeHtml(q.exp)+"</div>";
